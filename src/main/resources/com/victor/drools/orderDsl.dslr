@@ -1,0 +1,37 @@
+package com.victor.drools
+dialect "mvel"
+
+import com.victor.drools.GeneralDao;
+import com.victor.drools.order.*;
+import com.victor.drools.party.*;
+
+global GeneralDao dao;
+global org.slf4j.Logger log;
+
+declare Problem
+    orderId : long @key
+    ruleId : int @key
+end
+declare OIProblem extends Problem
+    product : String @key
+end
+
+rule "Rule #3 violation"
+when
+	Every Order
+	Without violations of rule 3
+	Which violates inParty constraints
+then
+	Add the violation of the rule 3
+end
+
+rule "Rule #7 violation"
+when
+    Every Order
+        - which has items
+    And every OrderItem
+	Without violations of item rule 7
+    Which violates product constraints
+then
+    Add the violation of the rule 7 for order item
+end

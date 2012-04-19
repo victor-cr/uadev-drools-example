@@ -1,0 +1,194 @@
+package com.victor.drools
+dialect "mvel"
+
+import com.victor.drools.GeneralDao;
+import com.victor.drools.order.*;
+import com.victor.drools.party.*;
+
+global GeneralDao dao;
+global org.slf4j.Logger log;
+
+declare SkipRule
+    orderId : long @key
+    ruleId : int @key
+end
+
+declare Problem
+    orderId : long @key
+    ruleId : int @key
+end
+
+declare OIProblem extends Problem
+    product : String @key
+end
+
+query findOrdersByInRole (String role)
+    $o : Order(inRole == role)
+end
+
+rule "Rule #3 violation"
+when
+    $o : Order($id: id, $t : time, $pty : inParty)
+    not( Problem(orderId == $id, ruleId == 3) )
+    eval( dao.findPartyBy($t, $pty) == null )
+then
+    log.info("Rule #3 violated for order: " + $id);
+    insert(new Problem($id, 3));
+end
+
+rule "Rule #3 fulfillment"
+when
+    $o : Order(inPartyId == null,
+                   $id: id, $t : time, $pty : inParty)
+    not( Problem(orderId == $id, ruleId == 3) )
+    eval( dao.findPartyBy($t, $pty) != null )
+then
+    log.info("Rule #3 fulfilled for order: " + $id);
+    modify ($o) {
+        inPartyId = dao.findPartyBy($t, $pty).getPartyId();
+    };
+end
+
+rule "Rule #4 violation"
+when
+    $o : Order($id: id, $t : time, $pty : outParty)
+    not( Problem(orderId == $id, ruleId == 4) )
+    eval( dao.findPartyBy($t, $pty) == null )
+then
+    log.info("Rule #4 violated for order: " + $id);
+    insert(new Problem($id, 4));
+end
+
+rule "Rule #4 fulfillment"
+when
+    $o : Order(outPartyId == null,
+                   $id: id, $t : time, $pty : outParty)
+    not( Problem(orderId == $id, ruleId == 4) )
+    eval( dao.findPartyBy($t, $pty) != null )
+then
+    log.info("Rule #4 fulfilled for order: " + $id);
+    modify ($o) {
+        outPartyId = dao.findPartyBy($t, $pty).getPartyId();
+    };
+end
+
+rule "Rule #5 violation"
+when
+    $o : Order(inPartyId != null,
+                   $id: id, $t : time, $pty : inPartyId, $role : inRole)
+    not( Problem(orderId == $id, ruleId == 5) )
+    eval( dao.findRoleBy($t, $pty, $role) == null )
+then
+    log.info("Rule #5 violated for order: " + $id);
+    insert(new Problem($id, 5));
+end
+
+rule "Rule #5 fulfillment"
+when
+    $o : Order(inPartyId != null, inRoleId == null,
+                   $id: id, $t : time, $pty : inPartyId, $role : inRole)
+    not( Problem(orderId == $id, ruleId == 5) )
+    eval( dao.findRoleBy($t, $pty, $role) != null )
+then
+    log.info("Rule #5 fulfilled for order: " + $id);
+    modify ($o) {
+        inRoleId = dao.findRoleBy($t, $pty, $role).getRoleId();
+    };
+end
+
+rule "Rule #6 violation"
+when
+    $o : Order(outPartyId != null,
+                   $id: id, $t : time, $pty : outPartyId, $role : outRole)
+    not( Problem(orderId == $id, ruleId == 6) )
+    eval( dao.findRoleBy($t, $pty, $role) == null )
+then
+    log.info("Rule #6 violated for order: " + $id);
+    insert(new Problem($id, 6));
+end
+
+rule "Rule #6 fulfillment"
+when
+    $o : Order(outPartyId != null, outRoleId == null,
+                   $id: id, $t : time, $pty : outPartyId, $role : outRole)
+    not( Problem(orderId == $id, ruleId == 6) )
+    eval( dao.findRoleBy($t, $pty, $role) != null )
+then
+    log.info("Rule #6 fulfilled for order: " + $id);
+    modify ($o) {
+        outRoleId = dao.findRoleBy($t, $pty, $role).getRoleId();
+    };
+end
+
+rule "Rule #7 violation"
+when
+    $o : Order(items != null,
+                   $id: id, $t : time)
+    $item : OrderItem($product: product) from $o.items
+    not( OIProblem(orderId == $id, ruleId == 7, product == $product) )
+    eval(dao.findProductBy($t, $product) == null)
+then
+    log.info("Rule #7 violated for order: " + $id + " and product: " + $product);
+    insert(new OIProblem($id, 7, $product));
+end
+
+rule "Rule #8 violation"
+when
+    $o : Order(inPartyId != null, outPartyId != null, outPartyId == inPartyId,
+                   $id: id)
+    not( SkipRule(orderId == $id, ruleId == 8) )
+    not( Problem(orderId == $id, ruleId in (3, 4, 8)) )
+then
+    log.info("++++++Rule #8 violated for order: " + $id);
+    insert(new Problem($id, 8));
+end
+
+rule "Rule #8 exceptional case"
+//salience 100
+when
+    $o : Order(inRole == "B", outRole == "B",
+               inPartyId != null, outPartyId != null, outPartyId == inPartyId,
+               $id: id)
+then
+    log.info("------Skip rule #8 execution for order: " + $id);
+    insertLogical(new SkipRule($id, 8));
+end
+
+rule "Order cleanup violation"
+when
+    $o : Order($id: id)
+    SkipRule(orderId == $id,
+                  $ruleId : ruleId)
+    $p : Problem(orderId == $id, ruleId == $ruleId)
+then
+    log.info("Problem #" + $ruleId + " retracted for order: " + $id);
+    retract($p);
+end
+
+rule "Rule #8 check"
+when
+    $o : Order($id: id)
+    $r : SkipRule(orderId == $id, ruleId == 8)
+then
+    log.info("******Rule #8 check for order: " + $id);
+    modify ($o) {
+        inRole = "S"
+    }
+end
+
+rule "Rule #9 violation"
+when
+    $o : Order([inRole, outRole] not in (["B", "S"], ["B", "R"], ["R", "S"], ["S", "B"]),
+                   $id: id)
+    not( Problem(orderId == $id, ruleId not in (3, 4, 5, 6, 8)) )
+then
+    log.info("Rule #9 violated for order: " + $id);
+    insert(new Problem($id, 9));
+end
+
+rule "Print problems"
+when
+    $p : Problem($order : orderId, $rule : ruleId)
+then
+    log.error("Problem #" + $rule + " with order #" + $order);
+end

@@ -1,0 +1,157 @@
+package com.victor.drools
+dialect "mvel"
+
+import java.util.Date;
+import com.victor.drools.GeneralDao;
+import com.victor.drools.order.*;
+import com.victor.drools.party.*;
+
+global GeneralDao dao;
+global org.slf4j.Logger log;
+
+declare SkipRule
+    orderId : long @key
+    ruleId : int @key
+end
+
+declare Problem
+    orderId : long @key
+    ruleId : int @key
+end
+
+rule "Prefetch inParty PartyDef"
+salience 100
+    when
+        Order(inParty != null, $t : time, $pCode : inParty)
+        not( PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t) )
+    then
+        PartyDef partyDef = dao.findPartyBy($t, $pCode);
+
+        if (partyDef != null) {
+            log.info("insert party definition: " + partyDef.getPartyId());
+            insert(partyDef);
+        }
+end
+
+rule "Prefetch outParty PartyDef"
+salience 100
+    when
+        Order(outParty != null, $t : time, $pCode : outParty)
+        not( PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t) )
+    then
+        PartyDef partyDef = dao.findPartyBy($t, $pCode);
+
+        if (partyDef != null) {
+            log.info("insert party definition: " + partyDef.getPartyId());
+            insert(partyDef);
+        }
+end
+
+rule "Prefetch inRole Role"
+salience 100
+    when
+        Order(inRole != null, $rCode : inRole)
+        not( Role(publicCode == $rCode) )
+    then
+        Role role = dao.findRoleBy($rCode);
+
+        if (role != null) {
+            log.info("insert role: " + role.getId());
+            insert(role);
+        }
+end
+
+rule "Prefetch outRole Role"
+salience 100
+    when
+        Order(outRole != null, $rCode : outRole)
+        not( Role(publicCode == $rCode) )
+    then
+        Role role = dao.findRoleBy($rCode);
+
+        if (role != null) {
+            log.info("insert role: " + role.getId());
+            insert(role);
+        }
+end
+
+rule "Prefetch inRole PartyRole"
+salience 50
+    when
+        Order(inParty != null, inRole != null,
+              $t : time, $pCode : inParty, $rCode : outRole)
+        PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t,
+                 $partyId : partyId)
+        Role(publicCode == $rCode, $roleId : id)
+        not( PartyRole(roleId == $roleId, startTime <= $t, stopTime > $t) )
+    then
+        PartyRole partyRole = dao.findRoleBy($t, $partyId, $rCode);
+
+        if (partyRole != null) {
+            log.info("insert party role: " + partyRole.getPartyId());
+            insert(partyRole);
+        }
+end
+
+rule "Prefetch outRole PartyRole"
+salience 50
+    when
+        Order(outParty != null, outRole != null,
+              $t : time, $pCode : outParty, $rCode : outRole)
+        PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t,
+                 $partyId : partyId)
+        Role(publicCode == $rCode, $roleId : id)
+        not( PartyRole(roleId == $roleId, startTime <= $t, stopTime > $t) )
+    then
+        PartyRole partyRole = dao.findRoleBy($t, $partyId, $rCode);
+
+        if (partyRole != null) {
+            log.info("insert party role: " + partyRole.getPartyId());
+            insert(partyRole);
+        }
+end
+
+rule "test"
+when
+    eval(true)
+then
+    log.info("Insert null");
+    insert(null);
+end
+
+##------------------------------------------------------------------------------------------
+
+rule "Rule #3 violation"
+when
+    Order($id: id, $t : time, $pCode : inParty)
+    not( SkipRule(orderId == $id, ruleId == 3) )
+    not( Problem(orderId == $id, ruleId == 3) )
+    not( PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t))
+then
+    log.info("Rule #3 violated for order: " + $id);
+    insert(new Problem($id, 3));
+end
+
+rule "Rule #4 violation"
+when
+    Order($id: id, $t : time, $pCode : outParty)
+    not( SkipRule(orderId == $id, ruleId == 4) )
+    not( Problem(orderId == $id, ruleId == 4) )
+    not( PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t))
+then
+    log.info("Rule #4 violated for order: " + $id);
+    insert(new Problem($id, 4));
+end
+
+rule "Rule #5 violation"
+when
+    Order($id: id, $t : time, $pCode : inParty, $rCode : inRole)
+    not( SkipRule(orderId == $id, ruleId == 5) )
+    not( Problem(orderId == $id, ruleId == 5) )
+    Role(publicCode == $rCode, $rId : id)
+    PartyDef(publicCode == $pCode, startTime <= $t, stopTime > $t, $pId : partyId)
+    not( PartyRole(partyId == $pId, roleId == $rId, startTime <= $t, stopTime > $t))
+then
+    log.info("Rule #5 violated for order: " + $id);
+    insert(new Problem($id, 5));
+end
