@@ -111,14 +111,6 @@ salience 50
         }
 end
 
-rule "test"
-when
-    eval(true)
-then
-    log.info("Insert null");
-    insert(null);
-end
-
 ##------------------------------------------------------------------------------------------
 
 rule "Rule #3 violation"
