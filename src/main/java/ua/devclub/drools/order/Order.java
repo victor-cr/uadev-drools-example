@@ -1,4 +1,4 @@
-package com.victor.drools.order;
+package ua.devclub.drools.order;
 
 import java.util.Date;
 import java.util.LinkedList;

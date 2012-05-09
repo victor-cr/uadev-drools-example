@@ -1,10 +1,10 @@
-package com.victor.drools
+package ua.devclub.drools
 dialect "mvel"
 
 import java.util.Date;
-import com.victor.drools.GeneralDao;
-import com.victor.drools.order.*;
-import com.victor.drools.party.*;
+import ua.devclub.drools.GeneralDao;
+import ua.devclub.drools.order.*;
+import ua.devclub.drools.party.*;
 
 global GeneralDao dao;
 global org.slf4j.Logger log;

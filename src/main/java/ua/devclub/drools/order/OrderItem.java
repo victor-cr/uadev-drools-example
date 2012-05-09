@@ -1,4 +1,4 @@
-package com.victor.drools.order;
+package ua.devclub.drools.order;
 
 /**
  * JavaDoc here

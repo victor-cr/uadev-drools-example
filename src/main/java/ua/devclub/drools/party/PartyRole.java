@@ -1,4 +1,4 @@
-package com.victor.drools.party;
+package ua.devclub.drools.party;
 
 import java.util.Date;
 

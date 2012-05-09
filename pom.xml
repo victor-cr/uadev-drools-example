@@ -1,13 +1,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.victor.drools</groupId>
+    <groupId>ua.devclub.drools</groupId>
     <artifactId>drools-example</artifactId>
     <packaging>jar</packaging>
     <version>1.0</version>
 
     <name>Drools Example</name>
-    <url>http://maven.apache.org</url>
+    <url>http://xpinjection.com/2012/04/05/15th-uadevclub-gathering/</url>
+
+    <scm>
+        <connection>scm:git:git://github.com/victor-cr/uadev-drools-example</connection>
+        <url>http://github.com/victor-cr/uadev-drools-example</url>
+    </scm>
 
     <repositories>
         <repository>
@@ -27,6 +32,7 @@
     </repositories>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <org.drools.version>5.3.0.Final</org.drools.version>
         <!--<org.drools.version>5.2.0.Final</org.drools.version>-->
         <!--<org.drools.version>5.1.0</org.drools.version>-->

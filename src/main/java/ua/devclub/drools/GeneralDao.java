@@ -1,9 +1,9 @@
-package com.victor.drools;
+package ua.devclub.drools;
 
-import com.victor.drools.order.ProductDef;
-import com.victor.drools.party.PartyDef;
-import com.victor.drools.party.PartyRole;
-import com.victor.drools.party.Role;
+import ua.devclub.drools.order.ProductDef;
+import ua.devclub.drools.party.PartyDef;
+import ua.devclub.drools.party.PartyRole;
+import ua.devclub.drools.party.Role;
 
 import java.util.ArrayList;
 import java.util.Calendar;

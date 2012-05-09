@@ -1,6 +1,6 @@
-package com.victor.drools;
+package ua.devclub.drools;
 
-import com.victor.drools.order.Order;
+import ua.devclub.drools.order.Order;
 import org.drools.KnowledgeBase;
 import org.drools.builder.KnowledgeBuilder;
 import org.drools.builder.KnowledgeBuilderConfiguration;
@@ -30,7 +30,7 @@ public class DroolsLauncher {
         KnowledgeBuilderConfiguration conf = KnowledgeBuilderFactory.newKnowledgeBuilderConfiguration();
         KnowledgeBuilder kBuilder = KnowledgeBuilderFactory.newKnowledgeBuilder(conf);
 
-        Resource drl = ResourceFactory.newClassPathResource("/com/victor/drools/orderPrefetch.drl", DroolsLauncher.class);
+        Resource drl = ResourceFactory.newClassPathResource("/ua/devclub/drools/orderPrefetch.drl", DroolsLauncher.class);
         kBuilder.add( drl, ResourceType.DRL );
 //        Resource drl = ResourceFactory.newClassPathResource("/com/victor/drools/order.drl", DroolsLauncher.class);
 //        kBuilder.add( drl, ResourceType.DRL );
